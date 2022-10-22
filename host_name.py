@@ -1,11 +1,4 @@
 import socket
-
-def get_host_ip():
-    hostname = socket.gethostname()
-    ip = socket.gethostbyname(hostname)
-    return ip
-
-hostName = get_host_ip()
-serverPort = 8080
-
-print(hostName)
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+print(s.getsockname()[0])
