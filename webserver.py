@@ -8,9 +8,9 @@ connection = sql.connect("trade.db")
 cursor = connection.cursor()
 
 def get_host_ip():
-    hostname = socket.gethostname()
-    ip = socket.gethostbyname(hostname)
-    return ip
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
 
 hostName = get_host_ip()
 serverPort = 8080
