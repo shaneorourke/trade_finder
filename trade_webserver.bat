@@ -1,0 +1,1 @@
+pushd "%~dp0" && python -m venv env && env\Scripts\activate.bat && python webserver.py
