@@ -39,7 +39,7 @@ class MyServer(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(bytes("<html><head><title>https://pythonbasics.org</title></head>", "utf-8"))
         self.wfile.write(bytes(f"<p>Last Log:{get_last_log_entry()}</p>","utf-8"))
-        self.wfile.write(bytes("<body>", "utf-8"))
+        self.wfile.write(bytes("<body><meta http-equiv='refresh' content='10' />", "utf-8"))
         self.wfile.write(bytes(f"<p>{dataframe()}</p>", "utf-8"))
         self.wfile.write(bytes("</body></html>", "utf-8"))
 

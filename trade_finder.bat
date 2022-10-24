@@ -1,1 +1,1 @@
-pushd "%~dp0" && python -m venv env && env\Scripts\activate.bat && python trade_finder.py
+pushd "%~dp0" && env\Scripts\activate.bat && python trade_finder.py && deactivate
