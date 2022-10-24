@@ -71,6 +71,16 @@ def check_status(symbol,screener,interval):
                     status = 'stock'
             if stock_k < 20 or stock_d < 20:
                 status = 'waiting'
+    if status == 'OPEN LONG':
+        if rsi < 50:
+            status = 'waiting'
+        if stock_k > 80 or stock_d > 80 or stock_k < 20 or stock_d < 20:
+            status = 'waiting'
+    if status == 'OPEN SHORT':
+        if rsi < 50:
+            status = 'waiting'
+        if stock_k > 80 or stock_d > 80 or stock_k < 20 or stock_d < 20:
+            status = 'waiting'
     return status, buy_or_sell
 
 def insert_into_db(symbol,exch,screener,interval,status,buy_or_sell):
