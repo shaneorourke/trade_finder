@@ -53,6 +53,10 @@ def check_status(symbol,screener,interval):
                 if rsi > 50:
                     if macd > macd_signal:
                         status = 'OPEN LONG'
+                    else:
+                        status = 'stock'
+                else:
+                    status = 'stock'
             if stock_k > 80 or stock_d > 80:
                 status = 'waiting'
     if buy_or_sell == 'sell':
@@ -61,6 +65,10 @@ def check_status(symbol,screener,interval):
                 if rsi < 50:
                     if macd < macd_signal:
                         status = 'OPEN SHORT'
+                    else:
+                        status = 'stock'
+                else:
+                    status = 'stock'
             if stock_k < 20 or stock_d < 20:
                 status = 'waiting'
     return status, buy_or_sell
