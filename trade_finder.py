@@ -26,6 +26,14 @@ def get_indicators(sym,ex,scrn,interv):
                 interval=Interval.INTERVAL_15_MINUTES,
                 timeout=10
             )
+        if interv[:-1] == '30':
+            hndlr = TA_Handler(
+                symbol=sym,
+                exchange=ex,
+                screener=scrn,
+                interval=Interval.INTERVAL_30_MINUTES,
+                timeout=10
+            )
     RSI = hndlr.get_analysis().indicators["RSI"]
     StochK = hndlr.get_analysis().indicators["Stoch.K"]
     StochD = hndlr.get_analysis().indicators["Stoch.D"]

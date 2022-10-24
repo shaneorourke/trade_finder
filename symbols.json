@@ -1,13 +1,13 @@
 {"symbols":[
-    {"symbol":"EURUSD", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"GBPUSD", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"USDCHF", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"USDJPY", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"NZDUSD", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"USDCNH", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"AUDUSD", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"USDCAD", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"USDSEK", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"GBPJPY", "exhange":"FX_IDC", "screener":"forex", "interval":"15m", "status":"", "buy_or_sell":""},
-    {"symbol":"BTCUSDT", "exhange":"BINANCE", "screener":"CRYPTO", "interval":"15m", "status":"", "buy_or_sell":""}
+    {"symbol":"EURUSD", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"GBPUSD", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"USDCHF", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"USDJPY", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"NZDUSD", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"USDCNH", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"AUDUSD", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"USDCAD", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"USDSEK", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"GBPJPY", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"BTCUSDT", "exhange":"BINANCE", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""}
 ]}
