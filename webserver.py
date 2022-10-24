@@ -2,7 +2,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import time, sqlite3 as sql
 import pandas as pd
-import socket
+import socket, os
 
 connection = sql.connect("trade.db")
 cursor = connection.cursor()
@@ -14,6 +14,16 @@ def get_host_ip():
 
 hostName = get_host_ip()
 serverPort = 8080
+
+def get_last_log_entry():
+    dir_path = 'Logs'
+    for file in os.listdir(dir_path):
+        path = os.path.join(dir_path, file)
+        if os.path.isfile(path):
+            with open(path) as logfile:
+                for line in (logfile.readlines() [-1:]):
+                    last_line = line.split('||')[0].split('::')[0]
+    return last_line
 
 def dataframe():
     sql = f'SELECT symbol, screener, interval, status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal FROM symbol_stats'
@@ -28,7 +38,7 @@ class MyServer(BaseHTTPRequestHandler):
         self.send_header("Content-type", "text/html")
         self.end_headers()
         self.wfile.write(bytes("<html><head><title>https://pythonbasics.org</title></head>", "utf-8"))
-        self.wfile.write(bytes("<p>Request: %s</p>" % self.path, "utf-8"))
+        self.wfile.write(bytes(f"<p>Last Log:{get_last_log_entry()}</p>","utf-8"))
         self.wfile.write(bytes("<body>", "utf-8"))
         self.wfile.write(bytes(f"<p>{dataframe()}</p>", "utf-8"))
         self.wfile.write(bytes("</body></html>", "utf-8"))
