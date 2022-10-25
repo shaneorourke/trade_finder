@@ -17,7 +17,7 @@ serverPort = 8080
 
 def get_last_log_entry():
     dir_path = 'Logs'
-    for file in os.listdir(dir_path):
+    for file in sorted(os.listdir(dir_path)):
         path = os.path.join(dir_path, file)
         if os.path.isfile(path):
             with open(path) as logfile:
