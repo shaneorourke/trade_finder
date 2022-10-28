@@ -25,11 +25,27 @@ def get_last_log_entry():
                     last_line = line.split('||')[0].split('::')[0]
     return last_line
 
+def color_values(val):
+    color = 'white'
+    if val == 'waiting':
+        color = 'white'
+    if val == 'stock':
+        color = 'yellow'
+    if val == 'OPEN LONG':
+        color = 'green' 
+    if val == 'OPEN SHORT':
+        color = 'red' 
+    return 'background-color: %s' % color
+
 def dataframe():
     sql = f'SELECT symbol, screener, interval, status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal FROM symbol_stats'
     sql_query = pd.read_sql_query(sql=sql,con=connection)
     df = pd.DataFrame(sql_query, columns = ['symbol', 'screener', 'interval', 'status', 'buy_or_sell', 'rsi', 'stock_k', 'stock_d', 'macd', 'macd_signal'])
-    data_html = df.to_html()
+    df = df.drop(df[df['status'] == 'waiting'].index, inplace=False)
+    df = df.drop(df[df['status'] == 'stock'].index, inplace=False)
+    styled_df = df.style.applymap(color_values)
+    data_html = styled_df.to_html()
+    #data_html = df.to_html()
     return data_html
 
 class MyServer(BaseHTTPRequestHandler):
