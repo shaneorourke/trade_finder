@@ -68,37 +68,25 @@ def check_status(symbol,screener,interval):
         status = 'stock'
     if buy_or_sell == 'buy':
         if status == 'stock':
-            if stock_k > 20 and stock_d > 20:
-                if rsi > 50:
-                    if macd > macd_signal:
-                        status = 'OPEN LONG'
-                    else:
-                        status = 'stock'
-                else:
-                    status = 'stock'
+            if stock_k > 20 and stock_d > 20 and rsi > 50 and macd > macd_signal and ema20 > ema50:
+                status = 'OPEN LONG'
+            else:
+                status = 'stock'
             if stock_k > 80 or stock_d > 80:
                 status = 'waiting'
     if buy_or_sell == 'sell':
         if status == 'stock':
-            if stock_k < 80 and stock_d < 80:
-                if rsi < 50:
-                    if macd < macd_signal:
-                        status = 'OPEN SHORT'
-                    else:
-                        status = 'stock'
-                else:
-                    status = 'stock'
+            if stock_k < 80 and stock_d < 80 and rsi < 50 and macd < macd_signal and ema50 > ema20:
+                status = 'OPEN SHORT'
+            else:
+                status = 'stock'
             if stock_k < 20 or stock_d < 20:
                 status = 'waiting'
     if status == 'OPEN LONG':
-        if rsi < 50:
-            status = 'waiting'
-        if stock_k > 80 or stock_d > 80 or stock_k < 20 or stock_d < 20:
+        if stock_k > 80 or stock_d > 80 or stock_k < 20 or stock_d < 20 or rsi < 50 or macd < macd_signal or ema20 < ema50:
             status = 'waiting'
     if status == 'OPEN SHORT':
-        if rsi < 50:
-            status = 'waiting'
-        if stock_k > 80 or stock_d > 80 or stock_k < 20 or stock_d < 20:
+        if stock_k > 80 or stock_d > 80 or stock_k < 20 or stock_d < 20 or rsi > 50 or macd > macd_signal or ema20 > ema50:
             status = 'waiting'
     return status, buy_or_sell
 

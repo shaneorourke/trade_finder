@@ -75,8 +75,11 @@ def generate_html_basic(dataframe: pd.DataFrame):
 def dataframe():
     sql = f'SELECT symbol, screener, interval, status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 FROM symbol_stats'
     sql_query = pd.read_sql_query(sql=sql,con=connection)
-    df = pd.DataFrame(sql_query, columns = ['symbol', 'screener', 'interval', 'status', 'buy_or_sell', 'rsi', 'stock_k', 'stock_d', 'macd', 'macd_signal', 'ema20', 'ema50'])
+    #col_list = ['symbol', 'screener', 'interval', 'status', 'buy_or_sell', 'rsi', 'stock_k', 'stock_d', 'macd', 'macd_signal', 'ema20', 'ema50']
+    col_list = ['symbol', 'screener', 'interval', 'status', 'buy_or_sell']
+    df = pd.DataFrame(sql_query, columns=col_list)
     df = df.drop(df[df['status'] == 'waiting'].index, inplace=False)
+    df.sort_values(by='status')
     #df = df.drop(df[df['status'] == 'stock'].index, inplace=False)
     data_html = generate_html(df)
     return data_html
