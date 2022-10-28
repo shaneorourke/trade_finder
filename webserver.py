@@ -37,15 +37,48 @@ def color_values(val):
         color = 'red' 
     return 'background-color: %s' % color
 
-def dataframe():
-    sql = f'SELECT symbol, screener, interval, status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal FROM symbol_stats'
-    sql_query = pd.read_sql_query(sql=sql,con=connection)
-    df = pd.DataFrame(sql_query, columns = ['symbol', 'screener', 'interval', 'status', 'buy_or_sell', 'rsi', 'stock_k', 'stock_d', 'macd', 'macd_signal'])
-    df = df.drop(df[df['status'] == 'waiting'].index, inplace=False)
-    df = df.drop(df[df['status'] == 'stock'].index, inplace=False)
-    styled_df = df.style.applymap(color_values)
+def generate_html(dataframe: pd.DataFrame):
+    # get the table HTML from the dataframe
+    table_html = dataframe.to_html(table_id="table")
+    # construct the complete HTML with jQuery Data tables
+    # You can disable paging or enable y scrolling on lines 20 and 21 respectively
+    html = f"""
+    <html>
+    <header>
+        <link href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" rel="stylesheet">
+    </header>
+    <body>
+    {table_html}
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready( function () {{
+            $('#table').DataTable({{
+                paging: true,
+                "pageLength": 100,
+                "lengthMenu": [ "All", 10, 25, 50, 75, 100 ]
+            }});
+        }});
+    </script>
+    </body>
+    </html>
+    """
+    # return the html
+    return html
+
+def generate_html_basic(dataframe: pd.DataFrame):
+    styled_df = dataframe.style.applymap(color_values)
     data_html = styled_df.to_html()
     #data_html = df.to_html()
+    return data_html
+
+def dataframe():
+    sql = f'SELECT symbol, screener, interval, status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 FROM symbol_stats'
+    sql_query = pd.read_sql_query(sql=sql,con=connection)
+    df = pd.DataFrame(sql_query, columns = ['symbol', 'screener', 'interval', 'status', 'buy_or_sell', 'rsi', 'stock_k', 'stock_d', 'macd', 'macd_signal', 'ema20', 'ema50'])
+    #df = df.drop(df[df['status'] == 'waiting'].index, inplace=False)
+    #df = df.drop(df[df['status'] == 'stock'].index, inplace=False)
+    data_html = generate_html(df)
     return data_html
 
 class MyServer(BaseHTTPRequestHandler):

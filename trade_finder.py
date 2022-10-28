@@ -13,7 +13,7 @@ logging.basicConfig(filename=f'Logs/trading_{log_file_date}.log', filemode='a', 
 
 connection = sql.connect("trade.db")
 cursor = connection.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS symbol_stats (symbol TEXT, exchange TEXT, screener TEXT, interval TEXT, status TEXT, buy_or_sell TEXT, rsi float, stock_k float, stock_d float, macd float, macd_signal float)")
+cursor.execute("CREATE TABLE IF NOT EXISTS symbol_stats (symbol TEXT, exchange TEXT, screener TEXT, interval TEXT, status TEXT, buy_or_sell TEXT, rsi float, stock_k float, stock_d float, macd float, macd_signal float, ema20 float, ema50 float)")
 connection.commit()
 
 def get_indicators(sym,ex,scrn,interv):
@@ -35,7 +35,7 @@ def get_indicators(sym,ex,scrn,interv):
                 timeout=10
             )
     if str(interv[-1:]).lower() == 'h':
-        if interv[:-1] == '15':
+        if interv[:-1] == '1':
             hndlr = TA_Handler(
                 symbol=sym,
                 exchange=ex,
@@ -48,16 +48,18 @@ def get_indicators(sym,ex,scrn,interv):
     StochD = hndlr.get_analysis().indicators["Stoch.D"]
     macd = hndlr.get_analysis().indicators["MACD.macd"]
     macdSignal = hndlr.get_analysis().indicators["MACD.signal"]
-    return RSI,StochK,StochD,macd,macdSignal
+    ema20 = hndlr.get_analysis().indicators["EMA20"]
+    ema50 = hndlr.get_analysis().indicators["EMA50"]
+    return RSI,StochK,StochD,macd,macdSignal, ema20, ema50
 
 def get_db_data(symbol, screener, interval):
-    cursor.execute(f'SELECT status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
+    cursor.execute(f'SELECT status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     stats = cursor.fetchone()
-    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6]
-    return status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal
+    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7], stats[8]
+    return status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50
 
 def check_status(symbol,screener,interval):
-    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal = get_db_data(symbol, screener, interval)
+    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
     if stock_k > 80 and stock_d > 80:
          buy_or_sell = 'sell'
          status = 'stock'
@@ -101,19 +103,19 @@ def check_status(symbol,screener,interval):
     return status, buy_or_sell
 
 def insert_into_db(symbol,exch,screener,interval,status,buy_or_sell):
-    RSI,StochK,StochD,macd,macdSignal = get_indicators(symbol,exch,screener,interval)
+    RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_indicators(symbol,exch,screener,interval)
     
     cursor.execute(f'SELECT count(*) FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     exists = int(cursor.fetchone()[0])
 
     if exists == 0:
-        sql = f"""INSERT INTO symbol_stats (symbol, exchange, screener, interval, status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal)
-            VALUES ("{symbol}","{exch}","{screener}","{interval}","waiting","waiting",{RSI},{StochK},{StochD},{macd},{macdSignal})
+        sql = f"""INSERT INTO symbol_stats (symbol, exchange, screener, interval, status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50)
+            VALUES ("{symbol}","{exch}","{screener}","{interval}","waiting","waiting",{RSI},{StochK},{StochD},{macd},{macdSignal}, {ema20}, {ema50})
                 """
     else:
         status, buy_or_sell = check_status(symbol,screener,interval)
         sql = f"""UPDATE symbol_stats
-        SET exchange = '{exch}', status = '{status}', buy_or_sell = '{buy_or_sell}', rsi = {RSI}, stock_k = {StochK}, stock_d = {StochD}, macd = {macd}, macd_signal = {macdSignal}
+        SET exchange = '{exch}', status = '{status}', buy_or_sell = '{buy_or_sell}', rsi = {RSI}, stock_k = {StochK}, stock_d = {StochD}, macd = {macd}, macd_signal = {macdSignal}, ema20 = {ema20}, ema50 = {ema50}
         WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"
         """
     cursor.execute(sql)
@@ -127,10 +129,10 @@ with open('symbols.json') as f:
 for data in symbols['symbols']:
     symbol, exhange, screener, interval, status, buy_or_sell = data['symbol'], data['exhange'], data['screener'], data['interval'], data['status'], data['buy_or_sell']
     insert_into_db(symbol, exhange, screener, interval, status, buy_or_sell)
-    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal = get_db_data(symbol, screener, interval)
-    logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal}')
+    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
+    logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal} || ema20:{ema20}, ema50:{ema50}')
     #if not status == 'waiting':
     if not status == 'waiting' and not status == 'stock':
-        print(f'symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal}')
+        print(f'symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal} || ema20:{ema20}, ema50:{ema50}')
     connection.commit()
     #time.sleep(60)
