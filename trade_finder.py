@@ -92,6 +92,56 @@ def get_db_data(symbol, screener, interval):
     status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7], stats[8]
     return status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50
 
+def check_status_v2(symbol,screener,interval):
+    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
+    # Pre Stock
+    if stock_k > 80 and stock_d > 80:
+        status = 'sell-stock-waiting'
+        buy_or_sell = 'waiting'
+    elif stock_k < 20 and stock_d < 20:
+        status = 'buy-stock-waiting'
+        buy_or_sell = 'waiting'
+    else:
+        status = 'waiting'
+        buy_or_sell = 'waiting'
+    
+    # Stock On
+    if status == 'sell-stock-waiting' or status == 'sell-stock':
+        if stock_k < 80 and stock_d < 80:
+            status = 'sell-stock'
+            buy_or_sell = 'sell'
+        if stock_k > 80 and stock_d > 80:
+            status = 'sell-stock-waiting'
+
+    if status == 'buy-stock-waiting' or status == 'buy-stock':
+        if stock_k > 20 and stock_d > 20:
+            status = 'buy-stock'
+            buy_or_sell = 'buy'
+        if stock_k < 20 and stock_d < 20:
+            status = 'buy-stock-waiting'
+            buy_or_sell = 'buy'
+
+    # Stock RSI MACD On
+    if status == 'sell-stock':
+        if rsi < 50 and macd < macd_signal:
+            status = 'OPEN SHORT'
+            buy_or_sell = 'sell'
+        if rsi > 50 or macd < macd_signal:
+            status = 'sell-stock'
+            buy_or_sell = 'sell'
+
+    if status == 'buy-stock':
+        if rsi > 50 and macd > macd_signal:
+            status = 'OPEN LONG'
+            buy_or_sell = 'buy'
+        if rsi < 50 or macd < macd_signal:
+            status = 'buy-stock'
+            buy_or_sell = 'buy'
+    
+    return status, buy_or_sell
+        
+
+
 def check_status(symbol,screener,interval):
     status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
     if stock_k > 80 and stock_d > 80:
@@ -140,7 +190,7 @@ def insert_into_db(symbol,exch,screener,interval,status,buy_or_sell,RSI,StochK,S
             VALUES ("{symbol}","{exch}","{screener}","{interval}","waiting","waiting",{RSI},{StochK},{StochD},{macd},{macdSignal}, {ema20}, {ema50})
                 """
     else:
-        status, buy_or_sell = check_status(symbol,screener,interval)
+        status, buy_or_sell = check_status_v2(symbol,screener,interval)
         sql = f"""UPDATE symbol_stats
         SET exchange = '{exch}', status = '{status}', buy_or_sell = '{buy_or_sell}', rsi = {RSI}, stock_k = {StochK}, stock_d = {StochD}, macd = {macd}, macd_signal = {macdSignal}, ema20 = {ema20}, ema50 = {ema50}
         WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"
