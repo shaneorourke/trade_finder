@@ -1,3 +1,5 @@
 tradingview_ta
 pandas
 Jinja2
+pybit
+ta
