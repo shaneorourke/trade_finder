@@ -9,9 +9,9 @@
     {"symbol":"USDCAD", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
     {"symbol":"USDSEK", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
     {"symbol":"GBPJPY", "exhange":"FX_IDC", "screener":"forex", "interval":"30m", "status":"", "buy_or_sell":""},
-    {"symbol":"BTCUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30", "status":"", "buy_or_sell":""},
-    {"symbol":"SOLUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30", "status":"", "buy_or_sell":""},
-    {"symbol":"ETHUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30", "status":"", "buy_or_sell":""},
-    {"symbol":"DOTUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30", "status":"", "buy_or_sell":""},
-    {"symbol":"ADAUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30", "status":"", "buy_or_sell":""}
+    {"symbol":"BTCUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"SOLUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"ETHUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"DOTUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"ADAUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""}
 ]}

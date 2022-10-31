@@ -154,6 +154,7 @@ with open('symbols.json') as f:
 for data in symbols['symbols']:
     symbol, exhange, screener, interval, status, buy_or_sell = data['symbol'], data['exhange'], data['screener'], data['interval'], data['status'], data['buy_or_sell']
     if exhange == 'ByBit':
+        interval = str(interval).replace('m','')
         candles = get_bybit_bars(symbol,interval,today,True)
         most_recent = candles.iloc[-1]
         close_price = most_recent.close
