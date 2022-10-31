@@ -13,10 +13,6 @@ import ta
 
 session = HTTP("https://api.bybit.com",
                api_key= sc.API_KEY, api_secret=sc.API_SECRET,request_timeout=30)
-try:
-    session.set_leverage(symbol="SOLUSDT",buy_leverage=1,sell_leverage=1)
-except Exception as e:
-    error = e
 
 now_today = dt.datetime.now()
 now_timestamp = dt.datetime.now()
@@ -100,21 +96,27 @@ def check_status(symbol,screener,interval):
     status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
     if stock_k > 80 and stock_d > 80:
          buy_or_sell = 'sell'
-         status = 'stock'
+         status = 'sell-stock-waiting'
     if stock_k < 20 and stock_d < 20:
         buy_or_sell = 'buy'
-        status = 'stock'
+        status = 'buy-stock-waiting'
     if buy_or_sell == 'buy':
+        if status == 'buy-stock-waiting':
+            if stock_k > 20 and stock_d > 20:
+                status = 'stock'
         if status == 'stock':
-            if stock_k > 20 and stock_d > 20 and rsi > 50 and macd > macd_signal:
+            if rsi > 50 and macd > macd_signal:
                 status = 'OPEN LONG'
             else:
                 status = 'stock'
             if stock_k > 80 or stock_d > 80:
                 status = 'waiting'
     if buy_or_sell == 'sell':
+        if status == 'sell-stock-waiting':
+            if stock_k < 80 and stock_d < 80:
+                status = 'stock'
         if status == 'stock':
-            if stock_k < 80 and stock_d < 80 and rsi < 50 and macd < macd_signal:
+            if rsi < 50 and macd < macd_signal:
                 status = 'OPEN SHORT'
             else:
                 status = 'stock'
@@ -172,7 +174,7 @@ for data in symbols['symbols']:
     status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
     logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal} || ema20:{ema20}, ema50:{ema50}')
     #if not status == 'waiting':
-    if not status == 'waiting' and not status == 'stock':
-        print(f'symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal} || ema20:{ema20}, ema50:{ema50}')
+    #if not status == 'waiting' and not status == 'stock':
+    #    print(f'symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal} || ema20:{ema20}, ema50:{ema50}')
     connection.commit()
     #time.sleep(60)
