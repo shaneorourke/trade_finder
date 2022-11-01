@@ -94,50 +94,48 @@ def get_db_data(symbol, screener, interval):
 
 def check_status_v2(symbol,screener,interval):
     status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
-    # Pre Stock
+    # Sell
     if stock_k > 80 and stock_d > 80:
         status = 'sell-stock-waiting'
-        buy_or_sell = 'waiting'
-    elif stock_k < 20 and stock_d < 20:
-        status = 'buy-stock-waiting'
-        buy_or_sell = 'waiting'
-    else:
-        status = 'waiting'
-        buy_or_sell = 'waiting'
-    
-    # Stock On
-    if status == 'sell-stock-waiting' or status == 'sell-stock':
+
+    if status == 'sell-stock-waiting':
         if stock_k < 80 and stock_d < 80:
             status = 'sell-stock'
-            buy_or_sell = 'sell'
-        if stock_k > 80 and stock_d > 80:
-            status = 'sell-stock-waiting'
 
-    if status == 'buy-stock-waiting' or status == 'buy-stock':
-        if stock_k > 20 and stock_d > 20:
-            status = 'buy-stock'
-            buy_or_sell = 'buy'
-        if stock_k < 20 and stock_d < 20:
-            status = 'buy-stock-waiting'
-            buy_or_sell = 'buy'
-
-    # Stock RSI MACD On
     if status == 'sell-stock':
         if rsi < 50 and macd < macd_signal:
             status = 'OPEN SHORT'
-            buy_or_sell = 'sell'
-        if rsi > 50 or macd < macd_signal:
+
+    # Status Resets
+    if status == 'OPEN SHORT':
+        if rsi > 50 or macd > macd_signal:
             status = 'sell-stock'
-            buy_or_sell = 'sell'
+
+    if status == 'sell-stock':
+        if stock_k > 80 and stock_d > 80:
+            status = 'sell-stock-waiting'
+
+    # Buys
+    if stock_k < 20 and stock_d < 20:
+        status = 'buy-stock-waiting'
+
+    if status == 'buy-stock-waiting':
+        if stock_k > 20 and stock_d > 20:
+            status = 'buy-stock'
 
     if status == 'buy-stock':
         if rsi > 50 and macd > macd_signal:
             status = 'OPEN LONG'
-            buy_or_sell = 'buy'
+
+    # Status Resets
+    if status == 'OPEN LONG':
         if rsi < 50 or macd < macd_signal:
             status = 'buy-stock'
-            buy_or_sell = 'buy'
-    
+
+    if status == 'buy-stock':
+        if stock_k < 20 and stock_d < 20:
+            status = 'buy-stock-waiting'
+
     return status, buy_or_sell
         
 
