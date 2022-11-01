@@ -97,14 +97,17 @@ def check_status_v2(symbol,screener,interval):
     # Sell
     if stock_k > 80 and stock_d > 80:
         status = 'sell-stock-waiting'
+        buy_or_sell = 'sell'
 
     if status == 'sell-stock-waiting':
         if stock_k < 80 and stock_d < 80:
             status = 'sell-stock'
+            buy_or_sell = 'sell'
 
     if status == 'sell-stock':
         if rsi < 50 and macd < macd_signal:
             status = 'OPEN SHORT'
+            buy_or_sell = 'sell'
 
     # Status Resets
     if status == 'OPEN SHORT':
@@ -118,14 +121,17 @@ def check_status_v2(symbol,screener,interval):
     # Buys
     if stock_k < 20 and stock_d < 20:
         status = 'buy-stock-waiting'
+        buy_or_sell = 'buy'
 
     if status == 'buy-stock-waiting':
         if stock_k > 20 and stock_d > 20:
             status = 'buy-stock'
+            buy_or_sell = 'buy'
 
     if status == 'buy-stock':
         if rsi > 50 and macd > macd_signal:
             status = 'OPEN LONG'
+            buy_or_sell = 'buy'
 
     # Status Resets
     if status == 'OPEN LONG':
