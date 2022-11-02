@@ -111,7 +111,7 @@ def check_status_v2(symbol,screener,interval):
 
     # Status Resets
     if status == 'OPEN SHORT':
-        if rsi > 50 and macd > macd_signal:
+        if rsi > 50 or macd > macd_signal:
             status = 'sell-stock'
 
     if status == 'sell-stock':
@@ -135,7 +135,7 @@ def check_status_v2(symbol,screener,interval):
 
     # Status Resets
     if status == 'OPEN LONG':
-        if rsi < 50 and macd < macd_signal:
+        if rsi < 50 or macd < macd_signal:
             status = 'buy-stock'
 
     if status == 'buy-stock':
