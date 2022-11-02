@@ -71,7 +71,7 @@ def applytechnicals(df):
     df['%K'] = ta.momentum.stoch(df.high,df.low,df.close,window=14,smooth_window=3)
     df['%D'] = df['%K'].rolling(3).mean()
     df['rsi'] = ta.momentum.rsi(df.close,window=14)
-    df['macd'] = ta.trend.macd_diff(df.close)
+    df['macd'] = ta.trend.macd(df.close)
     df['macd_signal'] = ta.trend.macd_signal(df.close)
     df.dropna(inplace=True)
     return df
@@ -223,7 +223,7 @@ for data in symbols['symbols']:
         macdSignal = most_recent['macd_signal']
     else:
         RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_tv_indicators(symbol,exhange,screener,interval)
-    
+    #print(f'symbol:{symbol} || StochK:{StochK} || StochD:{StochD} || RSI:{RSI} || macd:{macd} || macdSignal:{macdSignal} || ema20:{ema20} || ema50:{ema50}')
     insert_into_db(symbol, exhange, screener, interval, status, buy_or_sell, RSI, StochK, StochD, macd, macdSignal, ema20, ema50)
     status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
     logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal} || ema20:{ema20}, ema50:{ema50}')
