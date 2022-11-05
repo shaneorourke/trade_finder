@@ -26,7 +26,7 @@ logging.basicConfig(filename=f'Logs/trading_{log_file_date}.log', filemode='a', 
 
 connection = sql.connect("trade.db")
 cursor = connection.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS symbol_stats (symbol TEXT, exchange TEXT, screener TEXT, interval TEXT, status TEXT, buy_or_sell TEXT, rsi float, stock_k float, stock_d float, macd float, macd_signal float, ema20 float, ema50 float)")
+cursor.execute("CREATE TABLE IF NOT EXISTS symbol_stats (symbol TEXT, exchange TEXT, screener TEXT, interval TEXT, status TEXT, rsi float, stock_k float, stock_d float, macd float, macd_signal float, ema20 float, ema50 float)")
 connection.commit()
 
 def get_tv_indicators(sym,ex,scrn,interv):
@@ -101,32 +101,32 @@ def get_bybit_indicators(symbol,exhange,screener,interval):
     return RSI,StochK,StochD,macd,macdSignal, ema20, ema50
 
 def get_db_data(symbol, screener, interval):
-    cursor.execute(f'SELECT buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
+    cursor.execute(f'SELECT rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     stats = cursor.fetchone()
-    buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7]
-    return buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50
+    rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6]
+    return rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50
 
 def get_db_status(symbol, screener, interval):
     cursor.execute(f'SELECT status FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     stats = cursor.fetchone()
-    status = stats[0]
+    if stats != None:
+        status = stats[0]
+    else:
+        status = 'waiting'
     return status
 
-def check_status(buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50):
+def check_status(status, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50):
     # Sell
     if stock_k > 80 and stock_d > 80:
         status = 'sell-stock-waiting'
-        buy_or_sell = 'sell'
 
     if status == 'sell-stock-waiting':
         if stock_k < 80 and stock_d < 80:
             status = 'sell-stock'
-            buy_or_sell = 'sell'
 
     if status == 'sell-stock':
         if rsi < 50 and macd < macd_signal:
             status = 'OPEN SHORT'
-            buy_or_sell = 'sell'
 
     # Status Resets
     if status == 'OPEN SHORT':
@@ -142,17 +142,14 @@ def check_status(buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, e
     # Buys
     if stock_k < 20 and stock_d < 20:
         status = 'buy-stock-waiting'
-        buy_or_sell = 'buy'
 
     if status == 'buy-stock-waiting':
         if stock_k > 20 and stock_d > 20:
             status = 'buy-stock'
-            buy_or_sell = 'buy'
 
     if status == 'buy-stock':
         if rsi > 50 and macd > macd_signal:
             status = 'OPEN LONG'
-            buy_or_sell = 'buy'
 
     # Status Resets
     if status == 'OPEN LONG':
@@ -165,21 +162,21 @@ def check_status(buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, e
         if stock_k < 20 and stock_d < 20:
             status = 'buy-stock-waiting'
 
-    return status, buy_or_sell
+    return status
 
 
-def insert_into_db(symbol,exch,screener,interval,status,buy_or_sell,RSI,StochK,StochD,macd,macdSignal,ema20,ema50):
+def insert_into_db(symbol,exch,screener,interval,status,RSI,StochK,StochD,macd,macdSignal,ema20,ema50):
    
     cursor.execute(f'SELECT count(*) FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     exists = int(cursor.fetchone()[0])
 
     if exists == 0:
-        sql = f"""INSERT INTO symbol_stats (symbol, exchange, screener, interval, status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50)
-            VALUES ("{symbol}","{exch}","{screener}","{interval}","waiting","waiting",{RSI},{StochK},{StochD},{macd},{macdSignal}, {ema20}, {ema50})
+        sql = f"""INSERT INTO symbol_stats (symbol, exchange, screener, interval, status, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50)
+            VALUES ("{symbol}","{exch}","{screener}","{interval}","waiting",{RSI},{StochK},{StochD},{macd},{macdSignal}, {ema20}, {ema50})
                 """
     else:
         sql = f"""UPDATE symbol_stats
-        SET exchange = '{exch}', status = '{status}', buy_or_sell = '{buy_or_sell}', rsi = {RSI}, stock_k = {StochK}, stock_d = {StochD}, macd = {macd}, macd_signal = {macdSignal}, ema20 = {ema20}, ema50 = {ema50}
+        SET exchange = '{exch}', status = '{status}', rsi = {RSI}, stock_k = {StochK}, stock_d = {StochD}, macd = {macd}, macd_signal = {macdSignal}, ema20 = {ema20}, ema50 = {ema50}
         WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"
         """
     cursor.execute(sql)
@@ -196,8 +193,8 @@ for data in symbols['symbols']:
         RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_bybit_indicators(symbol,exhange,screener,interval)
     else:
         RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_tv_indicators(symbol,exhange,screener,interval)
-    status = get_db_status(symbol,screener,interval)
-    status, buy_or_sell = check_status(buy_or_sell,RSI,StochK,StochD,macd,macdSignal,ema20,ema50)
-    insert_into_db(symbol, exhange, screener, interval, status, buy_or_sell, RSI, StochK, StochD, macd, macdSignal, ema20, ema50)
-    logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{RSI} || stock_k:{StochK} || stock_d:{StochD} || macd:{macd} || macd_signal:{macdSignal} || ema20:{ema20}, ema50:{ema50}')
+    db_status = get_db_status(symbol,screener,interval)
+    status = check_status(db_status,RSI,StochK,StochD,macd,macdSignal,ema20,ema50)
+    insert_into_db(symbol, exhange, screener, interval, status, RSI, StochK, StochD, macd, macdSignal, ema20, ema50)
+    logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || rsi:{RSI} || stock_k:{StochK} || stock_d:{StochD} || macd:{macd} || macd_signal:{macdSignal} || ema20:{ema20}, ema50:{ema50}')
     connection.commit()
