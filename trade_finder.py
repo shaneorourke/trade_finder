@@ -87,14 +87,33 @@ def get_bybit_bars(trading_symbol, interval, startTime, apply_technicals):
         applytechnicals(df)
     return df
 
+def get_bybit_indicators(symbol,exhange,screener,interval):
+    candles = get_bybit_bars(symbol,interval,today,True)
+    most_recent = candles.iloc[-1]
+    close_price = most_recent.close
+    ema20 = most_recent.FastSMA
+    ema50 = most_recent.SlowSMA
+    StochK = most_recent['%K']
+    StochD = most_recent['%D']
+    RSI = most_recent['rsi']
+    macd = most_recent['macd']
+    macdSignal = most_recent['macd_signal']
+    return RSI,StochK,StochD,macd,macdSignal, ema20, ema50
+
 def get_db_data(symbol, screener, interval):
-    cursor.execute(f'SELECT status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
+    cursor.execute(f'SELECT buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     stats = cursor.fetchone()
-    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7], stats[8]
-    return status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50
+    buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7]
+    return buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50
+
+def get_db_status(symbol, screener, interval):
+    cursor.execute(f'SELECT status FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
+    stats = cursor.fetchone()
+    status = stats[0]
+    return status
 
 def check_status(symbol,screener,interval):
-    status, buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
+    buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
     # Sell
     if stock_k > 80 and stock_d > 80:
         status = 'sell-stock-waiting'
@@ -173,27 +192,14 @@ with open('symbols.json') as f:
 
 #while True:
 for data in symbols['symbols']:
-    symbol, exhange, screener, interval, status, buy_or_sell = data['symbol'], data['exhange'], data['screener'], data['interval'], data['status'], data['buy_or_sell']
+    symbol, exhange, screener, interval = data['symbol'], data['exhange'], data['screener'], data['interval']
     if exhange == 'ByBit':
-        candles = get_bybit_bars(symbol,interval,today,True)
-        most_recent = candles.iloc[-1]
-        close_price = most_recent.close
-        ema20 = most_recent.FastSMA
-        ema50 = most_recent.SlowSMA
-        StochK = most_recent['%K']
-        StochD = most_recent['%D']
-        RSI = most_recent['rsi']
-        macd = most_recent['macd']
-        macdSignal = most_recent['macd_signal']
+        RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_bybit_indicators(symbol,exhange,screener,interval)
     else:
         RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_tv_indicators(symbol,exhange,screener,interval)
-    #print(f'symbol:{symbol} || StochK:{StochK} || StochD:{StochD} || RSI:{RSI} || macd:{macd} || macdSignal:{macdSignal} || ema20:{ema20} || ema50:{ema50}')
+    status = get_db_status(symbol,screener,interval)
     insert_into_db(symbol, exhange, screener, interval, status, buy_or_sell, RSI, StochK, StochD, macd, macdSignal, ema20, ema50)
     status, buy_or_sell = check_status(symbol,screener,interval)
     insert_into_db(symbol, exhange, screener, interval, status, buy_or_sell, RSI, StochK, StochD, macd, macdSignal, ema20, ema50)
     logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{RSI} || stock_k:{StochK} || stock_d:{StochD} || macd:{macd} || macd_signal:{macdSignal} || ema20:{ema20}, ema50:{ema50}')
-    #if not status == 'waiting':
-    #if not status == 'waiting' and not status == 'stock':
-    #    print(f'symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{rsi} || stock_k:{stock_k} || stock_d:{stock_d} || macd:{macd} || macd_signal:{macd_signal} || ema20:{ema20}, ema50:{ema50}')
     connection.commit()
-    #time.sleep(60)
