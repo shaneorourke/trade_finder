@@ -13,5 +13,6 @@
     {"symbol":"SOLUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""},
     {"symbol":"ETHUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""},
     {"symbol":"DOTUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""},
-    {"symbol":"ADAUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""}
+    {"symbol":"ADAUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""},
+    {"symbol":"DOGEUSDT","exhange":"ByBit", "screener":"CRYPTO", "interval":"30m", "status":"", "buy_or_sell":""}
 ]}
