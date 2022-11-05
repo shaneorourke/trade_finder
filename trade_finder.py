@@ -112,8 +112,7 @@ def get_db_status(symbol, screener, interval):
     status = stats[0]
     return status
 
-def check_status(symbol,screener,interval):
-    buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = get_db_data(symbol, screener, interval)
+def check_status(buy_or_sell, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50):
     # Sell
     if stock_k > 80 and stock_d > 80:
         status = 'sell-stock-waiting'
@@ -198,8 +197,7 @@ for data in symbols['symbols']:
     else:
         RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_tv_indicators(symbol,exhange,screener,interval)
     status = get_db_status(symbol,screener,interval)
-    insert_into_db(symbol, exhange, screener, interval, status, buy_or_sell, RSI, StochK, StochD, macd, macdSignal, ema20, ema50)
-    status, buy_or_sell = check_status(symbol,screener,interval)
+    status, buy_or_sell = check_status(buy_or_sell,RSI,StochK,StochD,macd,macdSignal,ema20,ema50)
     insert_into_db(symbol, exhange, screener, interval, status, buy_or_sell, RSI, StochK, StochD, macd, macdSignal, ema20, ema50)
     logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || buy_or_sell:{buy_or_sell} || rsi:{RSI} || stock_k:{StochK} || stock_d:{StochD} || macd:{macd} || macd_signal:{macdSignal} || ema20:{ema20}, ema50:{ema50}')
     connection.commit()
