@@ -129,14 +129,18 @@ def get_db_status(symbol, screener, interval):
 def get_db_ema_cross(symbol, screener, interval):
     cursor.execute(f'SELECT ema_cross, cross_count FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     stats = cursor.fetchone()
-    if stats[0] != None:
-        cross = stats[0]
-    else:
+    if stats == None:
         cross = 'waiting'
-    if stats[1] != None:
-        cross_count = stats[1]
-    else:
         cross_count = 0
+    if stats != None:
+        if stats[0] != None:
+            cross = stats[0]
+        else:
+            cross = 'waiting'
+        if stats[1] != None:
+            cross_count = stats[1]
+        else:
+            cross_count = 0
 
     return cross, cross_count
 
