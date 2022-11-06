@@ -16,7 +16,7 @@ session = HTTP("https://api.bybit.com",
 
 now_today = dt.datetime.now()
 now_timestamp = dt.datetime.now()
-now = now_today + dt.timedelta(days=-1)
+now = now_today + dt.timedelta(days=-3)
 today = dt.datetime(now.year, now.month, now.day)
 
 log_file_date = str(datetime.now()).split(' ')[0].replace('-','_')
@@ -26,7 +26,7 @@ logging.basicConfig(filename=f'Logs/trading_{log_file_date}.log', filemode='a', 
 
 connection = sql.connect("trade.db")
 cursor = connection.cursor()
-cursor.execute("CREATE TABLE IF NOT EXISTS symbol_stats (symbol TEXT, exchange TEXT, screener TEXT, interval TEXT, status TEXT, rsi float, stock_k float, stock_d float, macd float, macd_signal float, ema20 float, ema50 float)")
+cursor.execute("CREATE TABLE IF NOT EXISTS symbol_stats (symbol TEXT, exchange TEXT, screener TEXT, interval TEXT, status TEXT, rsi float, stock_k float, stock_d float, macd float, macd_signal float, ema20 float, ema50 float, ema_cross text, cross_count integer)")
 connection.commit()
 
 def get_tv_indicators(sym,ex,scrn,interv):
@@ -56,6 +56,15 @@ def get_tv_indicators(sym,ex,scrn,interv):
                 interval=Interval.INTERVAL_1_HOUR,
                 timeout=10
             )
+    if str(interv[-1:]).lower() == 'h':
+        if interv[:-1] == '4':
+            hndlr = TA_Handler(
+                symbol=sym,
+                exchange=ex,
+                screener=scrn,
+                interval=Interval.INTERVAL_4_HOURS,
+                timeout=10
+            )
     RSI = hndlr.get_analysis().indicators["RSI"]
     StochK = hndlr.get_analysis().indicators["Stoch.K"]
     StochD = hndlr.get_analysis().indicators["Stoch.D"]
@@ -78,6 +87,8 @@ def applytechnicals(df):
 
 def get_bybit_bars(trading_symbol, interval, startTime, apply_technicals):
     interval = str(interval).replace('m','')
+    if 'h' in interval:
+        interval = int(str(interval).replace('h',''))
     startTime = str(int(startTime.timestamp()))
     response = session.query_kline(symbol=trading_symbol,interval=interval,from_time=startTime)
     df = pd.DataFrame(response['result'])
@@ -101,10 +112,10 @@ def get_bybit_indicators(symbol,exhange,screener,interval):
     return RSI,StochK,StochD,macd,macdSignal, ema20, ema50
 
 def get_db_data(symbol, screener, interval):
-    cursor.execute(f'SELECT rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
+    cursor.execute(f'SELECT rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50, ema_cross, cross_count FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     stats = cursor.fetchone()
-    rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50 = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6]
-    return rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50
+    rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50, ema_cross, cross_count = stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], stats[6], stats[7], stats[8]
+    return rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50, ema_cross, cross_count
 
 def get_db_status(symbol, screener, interval):
     cursor.execute(f'SELECT status FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
@@ -114,6 +125,53 @@ def get_db_status(symbol, screener, interval):
     else:
         status = 'waiting'
     return status
+
+def get_db_ema_cross(symbol, screener, interval):
+    cursor.execute(f'SELECT ema_cross, cross_count FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
+    stats = cursor.fetchone()
+    if stats[0] != None:
+        cross = stats[0]
+    else:
+        cross = 'waiting'
+    if stats[1] != None:
+        cross_count = stats[1]
+    else:
+        cross_count = 0
+
+    return cross, cross_count
+
+def check_ema_cross_status(ema_cross, ema20, ema50, cross_count, interval, higher_ema20, higher_ema50):
+    interval = int(str(interval).replace('m',''))
+    if ema_cross == 'waiting':
+        if ema20 > ema50:
+            ema_cross = 'up-waiting'
+        if ema20 < ema50:
+            ema_cross = 'down-waiting'
+    
+    if ema_cross == 'up-waiting':
+        if ema20 < ema50:
+            if higher_ema20 < higher_ema50:
+                ema_cross = 'OPEN SHORT'
+    
+    if ema_cross == 'down-waiting':
+        if ema20 > ema50:
+            if higher_ema20 > higher_ema50:
+                ema_cross = 'OPEN LONG'
+
+    if ema_cross == 'OPEN SHORT':
+        if ema20 > ema50:
+            ema_cross = 'OPEN LONG'
+
+    if ema_cross == 'OPEN LONG':
+        if ema20 < ema50:
+            ema_cross = 'OPEN SHORT'
+
+    if ema_cross == 'OPEN LONG' or ema_cross == 'OPEN LONG':
+        cross_count = cross_count+1
+        if cross_count >= interval:
+            ema_cross = 'waiting'
+    
+    return ema_cross,cross_count
 
 def check_status(status, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50):
     # Sell
@@ -165,18 +223,18 @@ def check_status(status, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50)
     return status
 
 
-def insert_into_db(symbol,exch,screener,interval,status,RSI,StochK,StochD,macd,macdSignal,ema20,ema50):
+def insert_into_db(symbol,exch,screener,interval,status,RSI,StochK,StochD,macd,macdSignal,ema20,ema50,ema_cross,ema_cross_count):
    
     cursor.execute(f'SELECT count(*) FROM symbol_stats WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"')
     exists = int(cursor.fetchone()[0])
 
     if exists == 0:
-        sql = f"""INSERT INTO symbol_stats (symbol, exchange, screener, interval, status, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50)
-            VALUES ("{symbol}","{exch}","{screener}","{interval}","waiting",{RSI},{StochK},{StochD},{macd},{macdSignal}, {ema20}, {ema50})
+        sql = f"""INSERT INTO symbol_stats (symbol, exchange, screener, interval, status, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50, ema_cross, cross_count)
+            VALUES ("{symbol}","{exch}","{screener}","{interval}","waiting",{RSI},{StochK},{StochD},{macd},{macdSignal}, {ema20}, {ema50}, '{ema_cross}', {ema_cross_count})
                 """
     else:
         sql = f"""UPDATE symbol_stats
-        SET exchange = '{exch}', status = '{status}', rsi = {RSI}, stock_k = {StochK}, stock_d = {StochD}, macd = {macd}, macd_signal = {macdSignal}, ema20 = {ema20}, ema50 = {ema50}
+        SET exchange = '{exch}', status = '{status}', rsi = {RSI}, stock_k = {StochK}, stock_d = {StochD}, macd = {macd}, macd_signal = {macdSignal}, ema20 = {ema20}, ema50 = {ema50}, ema_cross = '{ema_cross}', cross_count = {ema_cross_count}
         WHERE symbol="{symbol}" and screener="{screener}" and interval="{interval}"
         """
     cursor.execute(sql)
@@ -188,13 +246,17 @@ with open('symbols.json') as f:
 
 #while True:
 for data in symbols['symbols']:
-    symbol, exhange, screener, interval = data['symbol'], data['exhange'], data['screener'], data['interval']
+    symbol, exhange, screener, interval, higher_interval = data['symbol'], data['exhange'], data['screener'], data['interval'], data['higher_interval']
     if exhange == 'ByBit':
         RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_bybit_indicators(symbol,exhange,screener,interval)
+        higher_RSI,higher_StochK,higher_StochD,higher_macd,higher_macdSignal,higher_ema20,higher_ema50 = get_bybit_indicators(symbol,exhange,screener,higher_interval)
     else:
         RSI,StochK,StochD,macd,macdSignal,ema20,ema50 = get_tv_indicators(symbol,exhange,screener,interval)
+        higher_RSI,higher_StochK,higher_StochD,higher_macd,higher_macdSignal,higher_ema20,higher_ema50 = get_tv_indicators(symbol,exhange,screener,higher_interval)
     db_status = get_db_status(symbol,screener,interval)
     status = check_status(db_status,RSI,StochK,StochD,macd,macdSignal,ema20,ema50)
-    insert_into_db(symbol, exhange, screener, interval, status, RSI, StochK, StochD, macd, macdSignal, ema20, ema50)
-    logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || rsi:{RSI} || stock_k:{StochK} || stock_d:{StochD} || macd:{macd} || macd_signal:{macdSignal} || ema20:{ema20}, ema50:{ema50}')
+    db_ema_cross, db_cross_count = get_db_ema_cross(symbol, screener, interval)
+    ema_cross, cross_count = check_ema_cross_status(db_ema_cross,ema20,ema50,db_cross_count,interval,higher_ema20,higher_ema50)
+    insert_into_db(symbol, exhange, screener, interval, status, RSI, StochK, StochD, macd, macdSignal, ema20, ema50, ema_cross, cross_count)
+    logging.warning(f'{datetime.now()}::symbol:{symbol} || status:{status} || rsi:{RSI} || stock_k:{StochK} || stock_d:{StochD} || macd:{macd} || macd_signal:{macdSignal} || ema20:{ema20}, ema50:{ema50} || ema_cross:{ema_cross} || ema_cross_count:{cross_count}')
     connection.commit()
