@@ -73,7 +73,7 @@ def generate_html_basic(dataframe: pd.DataFrame):
     return data_html
 
 def dataframe():
-    sql = f'SELECT symbol, screener, interval, status, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50, case when ema20 > ema50 then "UP" else "DOWN" end as Trend, ema_cross FROM symbol_stats'
+    sql = f'SELECT symbol, screener, interval, status, rsi, stock_k, stock_d, macd, macd_signal, ema20, ema50, case when ema20 > ema50 then "UP" else "DOWN" end as Trend, ema_cross FROM symbol_stats where not (status like "%waiting%" and ema_cross like "%waiting%")'
     sql_query = pd.read_sql_query(sql=sql,con=connection)
     #col_list = ['symbol', 'screener', 'interval', 'status', 'rsi', 'stock_k', 'stock_d', 'macd', 'macd_signal', 'ema20', 'ema50']
     col_list = ['symbol', 'screener', 'interval', 'status', 'Trend', 'ema_cross']
