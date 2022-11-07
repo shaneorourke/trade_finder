@@ -156,11 +156,15 @@ def check_ema_cross_status(ema_cross, ema20, ema50, cross_count, interval, highe
         if ema20 < ema50:
             if higher_ema20 < higher_ema50:
                 ema_cross = 'OPEN SHORT'
+            else:
+                ema_cross = 'down-waiting'
     
     if ema_cross == 'down-waiting':
         if ema20 > ema50:
             if higher_ema20 > higher_ema50:
                 ema_cross = 'OPEN LONG'
+            else:
+                ema_cross = 'up-waiting'
 
     if ema_cross == 'OPEN SHORT':
         if ema20 > ema50:
